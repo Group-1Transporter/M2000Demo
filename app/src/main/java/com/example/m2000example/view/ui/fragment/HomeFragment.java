@@ -31,6 +31,7 @@ import java.io.InputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -42,12 +43,9 @@ public class HomeFragment extends BaseFragment implements Serializable {
     private HashMap<Menu, List<Menu>> childList = new HashMap<>();
     ArrayList<String> responceList = new ArrayList<>();
     private Menu menu;
-    int count = 1;
-    int position = 0;
     int increaser = 4;
+    ArrayList<String>ids = new ArrayList<>();
     private int querySendRequestTime = 10;
-    ArrayList<TempData> tempData = new ArrayList<>();
-    ArrayList<String> responceTemp = new ArrayList<>();
 
     ArrayList<String> idsCollection = new ArrayList<>();
 
@@ -99,7 +97,9 @@ public class HomeFragment extends BaseFragment implements Serializable {
             }
             temp = temp.substring(0, temp.length() - 1);
             idsCollection.add(temp);
+
         }
+
 
     }
 
@@ -109,20 +109,12 @@ public class HomeFragment extends BaseFragment implements Serializable {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         Log.e("Home:-", "onCreateView");
         binding = FragmentHomeBinding.inflate(inflater, container, false);
-//        sendRequest("type=3&itms=1", new QueryResponse() {
-//            @Override
-//            public void onSuccess(String response) {
-//                Log.d(TAG, "onSuccess: "+response);
-//            }
-//
-//            @Override
-//            public void onFail(Throwable throwable) {
-//
-//            }
-//        });
+
+
 
         return binding.getRoot();
     }
+
 
 
 
@@ -130,160 +122,28 @@ public class HomeFragment extends BaseFragment implements Serializable {
     public void onStart() {
         super.onStart();
         Toast.makeText(getActivity(), "HomeCreated", Toast.LENGTH_SHORT).show();
-        String temp = idsCollection.get(position);
-        Log.d(TAG, "onCreate: "+temp);
-        Log.d(TAG, "onStart: "+connected+deviceAddress);
-
-        String sendQury = "type=3&itms=" + temp;
-//        binding.dataShowTv.append(sendQury);
-//        binding.dataShowTv.append("\n");
-
-
-        StringBuilder dataCollecter = new StringBuilder();
-        int i =0;
         Log.d(TAG, "onStart: "+connected);
-        while(i<headerList.size()){
-            String idParent = String.valueOf(headerList.get(i).id);
-            sendRequest("type=3&itms="+idParent, new QueryResponse() {
-                @Override
-                public void onSuccess(String response) {
-                    responceList.add(response);
-                }
-
-                @Override
-                public void onFail(Throwable throwable) {
-
-                }
-            });
-
-            int j =0;
-            while(j<headerList.get(i).childMenus.size()){
-
-                String id = String.valueOf(headerList.get(i).childMenus.get(j).id);
-
-                sendRequest("type=3&itms="+id, new QueryResponse() {
-                    @Override
-                    public void onSuccess(String response) {
-                        responceList.add(response);
-                    }
-
-                    @Override
-                    public void onFail(Throwable throwable) {
-
-                    }
-                });
-                Log.d(TAG, "onStart: "+connected);
-
-
-                j++;
-            }
-            i++;
-        }
-
-
-
-        /*sendRequest(sendQury, new QueryResponse() {
-
-            @Override
-            public void onSuccess(String response) {
-
-                    Log.d(TAG, "onSuccess: "+response);
-                    Log.d(TAG, "onSuccess: "+connected+deviceAddress);
-
-                    dataCollecter.append(response);
-                  
-//                    if (response.contains("\r\n")){
-                        getActivity().runOnUiThread(() -> {
-
-                            binding.dataShowTv.append(dataCollecter);
-                            Log.d(TAG, "onSuccess: "+connected);
-                            responceTemp.add("Ids"+sendQury+"             Responce"+dataCollecter);
-
-                            binding.dataShowTv.append("\n--------------");
-                        });
-                        Log.d(TAG, "onSuccess: "+response);
-                        new Handler().postDelayed(() -> getActivity().runOnUiThread(() ->sendMethodCaller(position) ), querySendRequestTime);
-
-                    //}
-
-
-
-            }
-
-            @Override
-            public void onFail(Throwable throwable) {
-
-            }
-        });*/
-
         Log.d(TAG, "onStartResponceList: "+responceList);
     }
 
 
 
-    private void sendCaller(String id){
+    private void sendCaller(String id,int pos){
         sendRequest("type=3&itms="+id, new QueryResponse() {
             @Override
             public void onSuccess(String response) {
-                responceList.add(response);
-            }
-
-            @Override
-            public void onFail(Throwable throwable) {
-
-            }
-        });
-
-    }
-
-    private void sendMethodCaller(int Posotion){
-        if(deviceAddress==null){
-            deviceAddress = getArguments().getSerializable("DEVICE_ADDRESS").toString();
-        }
-        String ids = "";
-        try{
-             ids = idsCollection.get(Posotion);
-             position = Posotion;
-        }
-        catch (Exception e){
-
-        }
-        String sendQury = "type=3&itms=" + ids;
-        binding.dataShowTv.append(sendQury);
-        binding.dataShowTv.append("\n");
-        StringBuilder dataCollecter = new StringBuilder();
-        sendRequest(sendQury, new QueryResponse() {
-            @Override
-            public void onSuccess(String response) {
-
-                    dataCollecter.append(response);
+                if (response.equals("\r\n")){
+                    new Handler().postDelayed(()->getActivity().runOnUiThread(()->sendCaller(ids.get(pos),pos)),querySendRequestTime);
+                }
+                else if (response.contains("\r\n")){
+                    responceList.add(response);
                     Log.d(TAG, "onSuccess: "+response);
 
-                    if (response.contains("\r\n")){
-                        position++;
-                        getActivity().runOnUiThread(() -> {
-
-                            binding.dataShowTv.append(dataCollecter);
-                            Log.d(TAG, "onSuccess: "+connected);
-                            responceTemp.add("Ids"+sendQury+"             Responce"+dataCollecter);
-                            binding.dataShowTv.append("\n----------------------------"+"\n");
-                        });
-                        Log.d(TAG, "onSuccess: "+position);
-//                        if (position==483||position==958){
-//                            new Handler().postDelayed(()->getActivity().runOnUiThread(()->{
-//                                Toast.makeText(getActivity(), "Ruhil", Toast.LENGTH_SHORT).show();
-//                                new Handler().postDelayed(()->getActivity().runOnUiThread(()->sendMethodCaller(position)),querySendRequestTime);
-//                            }),20000);
-//                        }
-//                        else{
-//                            new Handler().postDelayed(()->getActivity().runOnUiThread(()->sendMethodCaller(position)),querySendRequestTime);
-//                        }
-                        new Handler().postDelayed(()->getActivity().runOnUiThread(()->sendMethodCaller(position)),querySendRequestTime);
-
-
+                    if(pos+1<ids.size()){
+                        new Handler().postDelayed(()->getActivity().runOnUiThread(()->sendCaller(ids.get(pos+1),pos+1)),querySendRequestTime);
                     }
 
-
+                }
             }
 
             @Override
@@ -291,10 +151,46 @@ public class HomeFragment extends BaseFragment implements Serializable {
 
             }
         });
+
+
     }
+
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        for(Menu menu: headerList ){
+
+            String tempIds = String.valueOf(menu.id);
+            for(int i=0;i<menu.childMenus.size();i++){
+                tempIds+=","+menu.childMenus.get(i).id;
+            }
+            ids.add(tempIds);
+
+        }
+
+        Log.d(TAG, "onStart: "+ids);
+        String temp = ids.get(0);
+        temp = temp.substring(0,temp.length() / 2);
+        if (temp.endsWith(",")) {
+            temp = temp.substring(0, temp.length() - 1);
+        }
+        sendRequest("type=3&itms=" + temp, new QueryResponse() {
+            @Override
+            public void onSuccess(String response) {
+                if(response.contains("\r\n")){
+                    Log.d(TAG, "onSuccess: "+response);
+
+                }
+            }
+
+            @Override
+            public void onFail(Throwable throwable) {
+
+            }
+        });
+        sendCaller(ids.get(0),0);
+
 
     }
 
@@ -357,6 +253,7 @@ public class HomeFragment extends BaseFragment implements Serializable {
             if (menu == null) {
                 menu = new Menu(dataList.get(i).get(0).getId(), null, true, true, null);
                 menu.parentMenu = menu;
+
             } else {
                 ch = dataList.get(i).get(0).getFirstLevelFlags().toCharArray();
                 Menu childMenu = new Menu(dataList.get(i).get(0).getId(), null, true, true, menu);
@@ -379,13 +276,6 @@ public class HomeFragment extends BaseFragment implements Serializable {
             menu.childMenus.get(i).childMenus.removeIf(childMenu -> childMenu.isHidden);
             childList.put(menu.childMenus.get(i), menu.childMenus.get(i).childMenus);
         }
-        /*for (Map.Entry<String, String> entry : map.entrySet()) {
-            System.out.println(entry.getKey() + "/" + entry.getValue());
-        }*/
-        for(Map.Entry<Menu, List<Menu>> entry : childList.entrySet()){
-
-        }
-
 
     }
 
@@ -404,6 +294,7 @@ public class HomeFragment extends BaseFragment implements Serializable {
 
 
             if (ch[0] == '1') {
+
 
                 i = getChild(i + 1, menu);
             }
